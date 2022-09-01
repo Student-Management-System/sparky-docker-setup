@@ -11,7 +11,7 @@ node {
         /* This builds the actual image; synonymous to
          * docker build on the command line */
 
-        app = docker.build("sparky/gateway")
+        app = docker.build("Student-Management-System/sparky-gateway")
     }
 
     stage('Test image') {
