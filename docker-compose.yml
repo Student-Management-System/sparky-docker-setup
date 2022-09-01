@@ -1,0 +1,65 @@
+version: '3.7'
+
+volumes:
+  postgres_data:
+      driver: local
+
+services:
+  postgres:
+      image: postgres
+      volumes:
+        - postgres_data:/var/lib/postgresql/data
+      environment:
+        POSTGRES_DB: keycloak
+        POSTGRES_USER: ${POSTGRESQL_USER}
+        POSTGRES_PASSWORD: ${POSTGRESQL_PASS}
+        PGDATA: /var/lib/postgresql/data
+  keycloak:
+      build: container/keycloak/
+      image: local_keycloak
+      #volumes:
+      #  - ./staging.sse.uni-hildesheim.de.key:/opt/keycloak/conf/staging.sse.uni-hildesheim.de.key
+      #  - ./staging.sse.uni-hildesheim.de-fullchain.pem:/opt/keycloak/conf/staging.sse.uni-hildesheim.crt
+      environment:
+        KC_HOSTNAME_STRICT: false
+        KEYCLOAK_ADMIN: ${KC_ADMIN}
+        KEYCLOAK_ADMIN_PASSWORD: ${KC_ADMIN_PW}
+        KC_DB: postgres
+        KC_DB_SCHEMA: public
+        KC_DB_URL_HOST: ${DB_ADDR}
+        KC_DB_USERNAME: ${POSTGRESQL_USER}
+        KC_DB_PASSWORD: ${POSTGRESQL_PASS}
+#        KC_HOSTNAME: ${KC_HOSTNAME}
+#        KC_HOSTNAME_PATH: ${KC_HOSTNAME_PATH}
+#        KC_HOSTNAME_ADMIN: ${KC_HOSTNAME_ADMIN}
+        KC_PROXY: edge
+#        KC_HOSTNAME_PORT: 443
+#        KC_HTTPS_CERTIFICATE_KEY_FILE: /opt/keycloak/conf/staging.sse.uni-hildesheim.de.key
+#        KC_HTTPS_CERTIFICATE_FILE: /opt/keycloak/conf/staging.sse.uni-hildesheim.crt
+        KEYCLOAK_LOGLEVEL: debug
+      ports:
+        - ${BIND_PORT}:8080
+        - 8443:8443
+      depends_on:
+        - postgres
+  registry:
+    build: container/registry/
+    image: local_registry
+  gateway:
+    build: container/gateway/
+    image: local_gateway
+    environment:
+      GW_EUREKA_IP: http://registry:8761
+      GW_OIDC_ISSUER: http://keycloak:8080
+      GW_OIDC_CLIENTID: ${GW_OIDC_CLIENTID}
+      GW_OIDC_SECRET: ${GW_OIDC_SECRET}
+      WAIT_HOSTS: keycloak:8080
+      WAIT_TIMEOUT: 300
+      WAIT_SLEEP_INTERVAL: 3
+    #volumes:
+    #  - ./gateway-config.yml:/opt/gateway/application-prod.yml
+    ports: 
+      - 8080:8080
+    depends_on:
+      - registry
+      - keycloak
