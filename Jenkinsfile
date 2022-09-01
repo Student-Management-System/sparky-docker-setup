@@ -28,7 +28,7 @@ node {
          * First, the incremental build number from Jenkins
          * Second, the 'latest' tag.
          * Pushing multiple tags is cheap, as all the layers are reused. */
-        docker.withRegistry('ghcr.io/Student-Management-System/sparky-docker-setup', '2ad31065-44e1-4850-a3b1-548e17aa6757') {
+        docker.withRegistry('https://ghcr.io/Student-Management-System/sparky-docker-setup', '2ad31065-44e1-4850-a3b1-548e17aa6757') {
             app.push("${env.BUILD_NUMBER}")
             app.push("latest")
         }
